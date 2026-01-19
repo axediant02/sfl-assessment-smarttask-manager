@@ -231,7 +231,9 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
             {/* Deadline with indicators */}
             {task.deadline && (() => {
               // #region agent log
-              fetch('http://127.0.0.1:7242/ingest/a78c118c-fa70-4c1c-9718-152bf27e85b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TaskCard.jsx:deadline-render',message:'Rendering deadline UI',data:{taskId:task.id,taskTitle:task.title,deadlineValue:task.deadline,formattedResult:formatDateTime(task.deadline)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+              if (import.meta.env.DEV) {
+                fetch('http://127.0.0.1:7242/ingest/a78c118c-fa70-4c1c-9718-152bf27e85b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TaskCard.jsx:deadline-render',message:'Rendering deadline UI',data:{taskId:task.id,taskTitle:task.title,deadlineValue:task.deadline,formattedResult:formatDateTime(task.deadline)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+              }
               // #endregion
               return (
                 <div className="flex items-center gap-2 flex-wrap">
