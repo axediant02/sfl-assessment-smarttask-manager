@@ -96,50 +96,75 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
+    <div className="min-h-screen py-8 px-4 relative z-10">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Smart Task Manager</h1>
-          <p className="text-gray-600">Organize your tasks with intelligent auto-categorization</p>
+        <div className="mb-10 text-center md:text-left">
+          <div className="inline-block mb-4">
+            <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-3">
+              Smart Task Manager
+            </h1>
+            <div className="h-1 w-24 bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full mx-auto md:mx-0"></div>
+          </div>
+          <p className="text-lg text-gray-600 font-medium mt-4">Organize your tasks with intelligent auto-categorization</p>
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-4 border border-gray-100 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
-            <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
-            <div className="text-sm text-gray-600">Total Tasks</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
+          <div className="stat-card glass-card-strong text-gray-800" style={{ background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(249, 250, 251, 0.95) 100%)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-3xl">📊</span>
+              <div className="text-3xl font-extrabold bg-gradient-to-br from-gray-700 to-gray-900 bg-clip-text text-transparent">
+                {stats.total}
+              </div>
+            </div>
+            <div className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Tasks</div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-gray-100 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
-            <div className="text-2xl font-bold text-yellow-600">{stats.todo}</div>
-            <div className="text-sm text-gray-600">To Do</div>
+          <div className="stat-card glass-card-strong text-yellow-600" style={{ background: 'linear-gradient(135deg, rgba(254, 243, 199, 0.95) 0%, rgba(255, 237, 213, 0.95) 100%)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-3xl">📋</span>
+              <div className="text-3xl font-extrabold bg-gradient-to-br from-yellow-600 to-orange-600 bg-clip-text text-transparent">
+                {stats.todo}
+              </div>
+            </div>
+            <div className="text-sm font-semibold text-yellow-700 uppercase tracking-wide">To Do</div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-gray-100 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
-            <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
-            <div className="text-sm text-gray-600">In Progress</div>
+          <div className="stat-card glass-card-strong text-blue-600" style={{ background: 'linear-gradient(135deg, rgba(219, 234, 254, 0.95) 0%, rgba(191, 219, 254, 0.95) 100%)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-3xl">⚡</span>
+              <div className="text-3xl font-extrabold bg-gradient-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                {stats.inProgress}
+              </div>
+            </div>
+            <div className="text-sm font-semibold text-blue-700 uppercase tracking-wide">In Progress</div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4 border border-gray-100 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
-            <div className="text-2xl font-bold text-green-600">{stats.done}</div>
-            <div className="text-sm text-gray-600">Done</div>
+          <div className="stat-card glass-card-strong text-green-600" style={{ background: 'linear-gradient(135deg, rgba(209, 250, 229, 0.95) 0%, rgba(167, 243, 208, 0.95) 100%)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-3xl">✅</span>
+              <div className="text-3xl font-extrabold bg-gradient-to-br from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                {stats.done}
+              </div>
+            </div>
+            <div className="text-sm font-semibold text-green-700 uppercase tracking-wide">Done</div>
           </div>
         </div>
 
         {/* Action Bar */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <button
             onClick={() => setShowForm(true)}
-            className="btn-primary flex items-center gap-2"
+            className="btn-primary flex items-center gap-2 shadow-lg shadow-purple-500/30"
           >
-            <span>+</span>
-            <span>Create Task</span>
+            <span className="text-xl">✨</span>
+            <span>Create New Task</span>
           </button>
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded-lg text-sm fade-in flex items-center gap-2">
-              <span>⚠️</span>
-              <span>{error}</span>
+            <div className="glass-card-strong bg-red-50/90 border-red-200 text-red-700 px-5 py-3 rounded-xl text-sm fade-in flex items-center gap-3 shadow-lg">
+              <span className="text-xl">⚠️</span>
+              <span className="font-medium">{error}</span>
               <button
                 onClick={() => setError(null)}
-                className="ml-2 text-red-700 hover:text-red-900 font-bold"
+                className="ml-2 text-red-700 hover:text-red-900 font-bold text-lg hover:scale-125 transition-transform"
               >
                 ×
               </button>
@@ -152,9 +177,12 @@ function App() {
 
         {/* Task List */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-600">Loading tasks...</p>
+          <div className="text-center py-20">
+            <div className="inline-block relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-pink-500 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            </div>
+            <p className="mt-6 text-gray-600 font-medium text-lg">Loading your tasks...</p>
           </div>
         ) : (
           <div className="fade-in">

@@ -92,8 +92,8 @@ Prepare deployment configuration:
 
 ## S3. Live Application Link
 
-**Frontend URL**: [Your Vercel URL here]
-**Backend URL**: [Your Railway/Render URL here]
+**Frontend URL**: https://sfl-assessment-smarttask-manager.vercel.app/
+**Backend URL**: https://dashboard.render.com/web/srv-d5mnimpr0fns73f3r9ig/deploys/dep-d5mninhr0fns73f3ra10
 
 ### Demo Instructions
 1. Visit the frontend URL
@@ -115,8 +115,7 @@ No authentication required - the app works immediately!
 
 ## S4. GitHub Repository Link
 
-**Repository URL**: [Your GitHub repository URL here]
-
+**Repository URL**: https://github.com/axediant02/sfl-assessment-smarttask-manager.git
 ### Repository Structure
 ```
 /
@@ -150,11 +149,3 @@ No authentication required - the app works immediately!
 - Touch-friendly button sizes and spacing
 
 ---
-
-## Time Allocation Summary
-
-- Backend Setup: ~30 minutes
-- Frontend Core: ~45 minutes
-- UI Polish & Integration: ~30 minutes
-- Deployment Prep: ~15 minutes
-- **Total: ~2 hours**

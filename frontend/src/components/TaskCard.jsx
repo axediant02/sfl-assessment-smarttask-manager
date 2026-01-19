@@ -1,26 +1,26 @@
 import { useState } from 'react';
 
 const categoryColors = {
-  Work: 'bg-blue-100 text-blue-800 border-blue-200',
-  Personal: 'bg-purple-100 text-purple-800 border-purple-200',
-  Shopping: 'bg-green-100 text-green-800 border-green-200',
-  Health: 'bg-red-100 text-red-800 border-red-200',
-  Learning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  Travel: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  Finance: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  Other: 'bg-gray-100 text-gray-800 border-gray-200',
+  Work: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-blue-500/30',
+  Personal: 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-purple-500/30',
+  Shopping: 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-green-500/30',
+  Health: 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-red-500/30',
+  Learning: 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-yellow-500/30',
+  Travel: 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-indigo-500/30',
+  Finance: 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-emerald-500/30',
+  Other: 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-gray-500/30',
 };
 
 const priorityColors = {
-  High: 'bg-red-500',
-  Medium: 'bg-yellow-500',
-  Low: 'bg-green-500',
+  High: 'bg-gradient-to-r from-red-500 to-red-600 shadow-lg shadow-red-500/50',
+  Medium: 'bg-gradient-to-r from-yellow-400 to-orange-500 shadow-lg shadow-yellow-500/50',
+  Low: 'bg-gradient-to-r from-green-500 to-emerald-500 shadow-lg shadow-green-500/50',
 };
 
 const statusColors = {
-  Todo: 'bg-gray-200 text-gray-700',
-  'In Progress': 'bg-blue-200 text-blue-700',
-  Done: 'bg-green-200 text-green-700',
+  Todo: 'bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg',
+  'In Progress': 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-lg shadow-blue-500/50',
+  Done: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50',
 };
 
 export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
@@ -57,35 +57,37 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 card-hover border border-gray-100 fade-in">
+    <div className="task-card-gradient glass-card-strong rounded-2xl shadow-xl p-6 card-hover border border-white/50 fade-in relative overflow-hidden group">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-200/20 to-pink-200/20 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+      <div className="relative z-10">
       {isEditing ? (
         <div className="space-y-4">
           <input
             type="text"
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm"
             placeholder="Task title"
           />
           <textarea
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all bg-white/80 backdrop-blur-sm"
             rows="3"
             placeholder="Description"
           />
           <select
             value={editPriority}
             onChange={(e) => setEditPriority(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm"
           >
             <option value="High">High</option>
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
-          <div className="flex gap-2">
+          <div className="flex gap-3 pt-2">
             <button onClick={handleSave} className="btn-primary flex-1">
-              Save
+              💾 Save
             </button>
             <button onClick={handleCancel} className="btn-secondary flex-1">
               Cancel
@@ -94,24 +96,24 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
         </div>
       ) : (
         <>
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-800 mb-1">{task.title}</h3>
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1 pr-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-2 leading-tight">{task.title}</h3>
               {task.description && (
-                <p className="text-gray-600 text-sm mb-3">{task.description}</p>
+                <p className="text-gray-600 text-sm leading-relaxed mb-3">{task.description}</p>
               )}
             </div>
-            <div className="flex items-center gap-2 ml-4">
-              <div className={`w-3 h-3 rounded-full ${priorityColors[task.priority]}`} title={task.priority} />
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <div className={`w-4 h-4 rounded-full ${priorityColors[task.priority]} shadow-lg`} title={task.priority}></div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-gray-200/50">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`px-2 py-1 rounded-md text-xs font-medium border ${categoryColors[task.category] || categoryColors.Other}`}>
+              <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-md ${categoryColors[task.category] || categoryColors.Other}`}>
                 {task.category}
               </span>
-              <span className={`px-2 py-1 rounded-md text-xs font-medium ${statusColors[task.status]}`}>
+              <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${statusColors[task.status]}`}>
                 {task.status}
               </span>
             </div>
@@ -119,29 +121,30 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleStatusToggle}
-                className={`px-3 py-1 rounded-md text-xs font-medium transition-all duration-200 hover:shadow-md hover:scale-105 active:scale-95 ${statusColors[task.status]}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg ${statusColors[task.status]}`}
                 title="Toggle status"
               >
                 {task.status === 'Todo' ? '▶ Start' : task.status === 'In Progress' ? '✓ Complete' : '↻ Reset'}
               </button>
               <button
                 onClick={() => setIsEditing(true)}
-                className="px-3 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 hover:from-gray-200 hover:to-gray-300 transition-all duration-300 hover:scale-110 active:scale-95 shadow-md"
                 title="Edit task"
               >
-                Edit
+                ✏️
               </button>
               <button
                 onClick={() => onDelete(task.id)}
-                className="px-3 py-1 rounded-md text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-all duration-200 hover:scale-105 active:scale-95"
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-red-100 to-red-200 text-red-700 hover:from-red-200 hover:to-red-300 transition-all duration-300 hover:scale-110 active:scale-95 shadow-md"
                 title="Delete task"
               >
-                Delete
+                🗑️
               </button>
             </div>
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

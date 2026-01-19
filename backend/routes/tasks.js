@@ -53,20 +53,21 @@ router.get('/', async (req, res) => {
 // POST /api/tasks - Create new task
 router.post('/', async (req, res) => {
   try {
-    const { title, description, priority = 'Medium', status = 'Todo' } = req.body;
+    const { title, description, priority = 'Medium', status = 'Todo', category } = req.body;
     
     if (!title || title.trim() === '') {
       return res.status(400).json({ error: 'Title is required' });
     }
 
     const tasks = await readTasks();
-    const category = categorizeTask(title, description || '');
+    // Use provided category, or auto-categorize if not provided
+    const taskCategory = category || categorizeTask(title, description || '');
     
     const newTask = {
       id: uuidv4(),
       title: title.trim(),
       description: description?.trim() || '',
-      category,
+      category: taskCategory,
       priority,
       status,
       createdAt: new Date().toISOString(),
@@ -101,14 +102,15 @@ router.put('/:id', async (req, res) => {
     // Update task fields
     if (title !== undefined) existingTask.title = title.trim();
     if (description !== undefined) existingTask.description = description?.trim() || '';
-    if (category !== undefined) existingTask.category = category;
-    if (priority !== undefined) existingTask.priority = priority;
-    if (status !== undefined) existingTask.status = status;
-    
-    // Re-categorize if title or description changed
-    if (title !== undefined || description !== undefined) {
+    if (category !== undefined) {
+      // If category is explicitly provided, use it
+      existingTask.category = category;
+    } else if (title !== undefined || description !== undefined) {
+      // Only auto-categorize if category wasn't provided and title/description changed
       existingTask.category = categorizeTask(existingTask.title, existingTask.description);
     }
+    if (priority !== undefined) existingTask.priority = priority;
+    if (status !== undefined) existingTask.status = status;
     
     existingTask.updatedAt = new Date().toISOString();
     
