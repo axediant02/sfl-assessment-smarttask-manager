@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatDateTime, formatDate, isOverdue, isApproaching, getDaysUntilDeadline } from '../utils/dateFormatter';
 
 const categoryColors = {
   Work: 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-blue-500/30',
@@ -26,12 +27,26 @@ const statusColors = {
 const categories = ['Work', 'Personal', 'Shopping', 'Health', 'Learning', 'Travel', 'Finance', 'Other'];
 const validPriorities = ['High', 'Medium', 'Low'];
 
+// Helper to convert ISO string to datetime-local format
+const isoToDateTimeLocal = (isoString) => {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description);
   const [editPriority, setEditPriority] = useState(task.priority);
   const [editCategory, setEditCategory] = useState(task.category);
+  const [editDeadline, setEditDeadline] = useState(task.deadline ? isoToDateTimeLocal(task.deadline) : '');
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -56,6 +71,16 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
       newErrors.category = 'Invalid category';
     }
     
+    // Deadline validation
+    if (editDeadline) {
+      const deadlineDate = new Date(editDeadline);
+      if (isNaN(deadlineDate.getTime())) {
+        newErrors.deadline = 'Invalid deadline format';
+      } else if (deadlineDate <= new Date() && task.status !== 'Done') {
+        newErrors.deadline = 'Deadline must be in the future';
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -64,11 +89,13 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
     if (!validate()) return;
     
     try {
+      const deadlineISO = editDeadline ? new Date(editDeadline).toISOString() : undefined;
       await onUpdate(task.id, {
         title: editTitle.trim(),
         description: editDescription.trim(),
         priority: editPriority,
         category: editCategory || undefined,
+        deadline: deadlineISO,
       });
       setIsEditing(false);
       setErrors({});
@@ -82,6 +109,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
     setEditDescription(task.description);
     setEditPriority(task.priority);
     setEditCategory(task.category);
+    setEditDeadline(task.deadline ? isoToDateTimeLocal(task.deadline) : '');
     setIsEditing(false);
   };
 
@@ -153,6 +181,24 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
+          <div>
+            <input
+              type="datetime-local"
+              value={editDeadline}
+              onChange={(e) => {
+                setEditDeadline(e.target.value);
+                if (errors.deadline) setErrors({ ...errors, deadline: '' });
+              }}
+              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm ${
+                errors.deadline ? 'border-red-300' : 'border-gray-200'
+              }`}
+              min={new Date().toISOString().slice(0, 16)}
+            />
+            {errors.deadline && (
+              <p className="text-red-600 text-xs mt-1">{errors.deadline}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">Leave empty for no deadline</p>
+          </div>
           <div className="flex gap-3 pt-2">
             <button 
               onClick={handleSave} 
@@ -178,6 +224,43 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
             <div className="flex items-center gap-2 flex-shrink-0">
               <div className={`w-4 h-4 rounded-full ${priorityColors[task.priority]} shadow-lg`} title={task.priority}></div>
             </div>
+          </div>
+
+          {/* Timestamps and Deadline Indicators */}
+          <div className="mb-4 space-y-2">
+            {/* Deadline with indicators */}
+            {task.deadline && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-gray-600">⏰ Deadline:</span>
+                <span className="text-xs font-medium text-gray-700">{formatDateTime(task.deadline)}</span>
+                {isOverdue(task.deadline, task.status) && (
+                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md">
+                    ⚠️ Overdue
+                  </span>
+                )}
+                {!isOverdue(task.deadline, task.status) && isApproaching(task.deadline, task.status) && (
+                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-md">
+                    ⏰ Due soon
+                  </span>
+                )}
+              </div>
+            )}
+            
+            {/* Created date */}
+            {task.createdAt && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600">📅 Created:</span>
+                <span className="text-xs text-gray-700">{formatDate(task.createdAt, false)}</span>
+              </div>
+            )}
+            
+            {/* Finished date */}
+            {task.finishedAt && task.status === 'Done' && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-600">✅ Finished:</span>
+                <span className="text-xs text-gray-700">{formatDateTime(task.finishedAt)}</span>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-gray-200/50">

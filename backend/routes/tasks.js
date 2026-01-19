@@ -53,7 +53,7 @@ router.get('/', async (req, res) => {
 // POST /api/tasks - Create new task
 router.post('/', async (req, res) => {
   try {
-    const { title, description, priority = 'Medium', status = 'Todo', category } = req.body;
+    const { title, description, priority = 'Medium', status = 'Todo', category, deadline } = req.body;
     
     // Validation
     const trimmedTitle = title?.trim() || '';
@@ -78,10 +78,27 @@ router.post('/', async (req, res) => {
     if (category && !validCategories.includes(category)) {
       return res.status(400).json({ error: 'Invalid category' });
     }
+    
+    // Deadline validation
+    let deadlineISO = null;
+    if (deadline) {
+      const deadlineDate = new Date(deadline);
+      if (isNaN(deadlineDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid deadline format' });
+      }
+      // Check if deadline is in the future
+      if (deadlineDate <= new Date()) {
+        return res.status(400).json({ error: 'Deadline must be in the future' });
+      }
+      deadlineISO = deadlineDate.toISOString();
+    }
 
     const tasks = await readTasks();
     // Use provided category, or auto-categorize if not provided
     const taskCategory = category || categorizeTask(trimmedTitle, description?.trim() || '');
+    
+    // Set finishedAt if status is Done
+    const finishedAt = status === 'Done' ? new Date().toISOString() : null;
     
     const newTask = {
       id: uuidv4(),
@@ -90,6 +107,8 @@ router.post('/', async (req, res) => {
       category: taskCategory,
       priority,
       status,
+      deadline: deadlineISO,
+      finishedAt,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -108,7 +127,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, category, priority, status } = req.body;
+    const { title, description, category, priority, status, deadline } = req.body;
     
     const tasks = await readTasks();
     const taskIndex = tasks.findIndex(task => task.id === id);
@@ -118,6 +137,7 @@ router.put('/:id', async (req, res) => {
     }
 
     const existingTask = tasks[taskIndex];
+    const previousStatus = existingTask.status;
     
     // Validation and update task fields
     if (title !== undefined) {
@@ -154,12 +174,40 @@ router.put('/:id', async (req, res) => {
       }
       existingTask.priority = priority;
     }
+    
+    // Handle deadline
+    if (deadline !== undefined) {
+      if (deadline === null || deadline === '') {
+        existingTask.deadline = null;
+      } else {
+        const deadlineDate = new Date(deadline);
+        if (isNaN(deadlineDate.getTime())) {
+          return res.status(400).json({ error: 'Invalid deadline format' });
+        }
+        // Only validate future deadline if task is not done
+        if (existingTask.status !== 'Done' && deadlineDate <= new Date()) {
+          return res.status(400).json({ error: 'Deadline must be in the future' });
+        }
+        existingTask.deadline = deadlineDate.toISOString();
+      }
+    }
+    
+    // Handle status and finishedAt
     if (status !== undefined) {
       const validStatuses = ['Todo', 'In Progress', 'Done'];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ error: 'Status must be Todo, In Progress, or Done' });
       }
       existingTask.status = status;
+      
+      // Auto-set finishedAt when status changes to Done
+      if (status === 'Done' && previousStatus !== 'Done') {
+        existingTask.finishedAt = new Date().toISOString();
+      }
+      // Clear finishedAt when status changes from Done to another status
+      else if (status !== 'Done' && previousStatus === 'Done') {
+        existingTask.finishedAt = null;
+      }
     }
     
     existingTask.updatedAt = new Date().toISOString();

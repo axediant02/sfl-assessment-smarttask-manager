@@ -3,11 +3,26 @@ import { useState } from 'react';
 const categories = ['Work', 'Personal', 'Shopping', 'Health', 'Learning', 'Travel', 'Finance', 'Other'];
 const validPriorities = ['High', 'Medium', 'Low'];
 
+// Helper to convert ISO string to datetime-local format
+const isoToDateTimeLocal = (isoString) => {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return '';
+  // Format: YYYY-MM-DDTHH:mm
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
   const [title, setTitle] = useState(initialTask?.title || '');
   const [description, setDescription] = useState(initialTask?.description || '');
   const [priority, setPriority] = useState(initialTask?.priority || 'Medium');
   const [category, setCategory] = useState(initialTask?.category || '');
+  const [deadline, setDeadline] = useState(initialTask?.deadline ? isoToDateTimeLocal(initialTask.deadline) : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -37,6 +52,16 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
       newErrors.category = 'Invalid category selected';
     }
     
+    // Deadline validation
+    if (deadline) {
+      const deadlineDate = new Date(deadline);
+      if (isNaN(deadlineDate.getTime())) {
+        newErrors.deadline = 'Invalid deadline format';
+      } else if (deadlineDate <= new Date()) {
+        newErrors.deadline = 'Deadline must be in the future';
+      }
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -48,16 +73,21 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
 
     setIsSubmitting(true);
     try {
+      // Convert datetime-local to ISO string
+      const deadlineISO = deadline ? new Date(deadline).toISOString() : undefined;
+      
       await onSubmit({
         title: title.trim(),
         description: description.trim(),
         priority,
         category: category || undefined, // Send undefined if empty to let backend auto-categorize
+        deadline: deadlineISO,
       });
       setTitle('');
       setDescription('');
       setPriority('Medium');
       setCategory('');
+      setDeadline('');
       setErrors({});
       onClose();
     } catch (error) {
@@ -159,6 +189,28 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
                 ))}
               </select>
               <p className="text-xs text-gray-500 mt-1">Leave as "Auto" to let the system categorize based on keywords</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                Deadline (Optional)
+              </label>
+              <input
+                type="datetime-local"
+                value={deadline}
+                onChange={(e) => {
+                  setDeadline(e.target.value);
+                  if (errors.deadline) setErrors({ ...errors, deadline: '' });
+                }}
+                className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm font-medium ${
+                  errors.deadline ? 'border-red-300' : 'border-gray-200'
+                }`}
+                min={new Date().toISOString().slice(0, 16)}
+              />
+              {errors.deadline && (
+                <p className="text-red-600 text-xs mt-1">{errors.deadline}</p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">Set a deadline to track when this task should be completed</p>
             </div>
 
             <div className="flex gap-3 pt-4">
