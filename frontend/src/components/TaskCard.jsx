@@ -46,7 +46,8 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
   const [editDescription, setEditDescription] = useState(task.description);
   const [editPriority, setEditPriority] = useState(task.priority);
   const [editCategory, setEditCategory] = useState(task.category);
-  const [editDeadline, setEditDeadline] = useState(task.deadline ? isoToDateTimeLocal(task.deadline) : '');
+  // Temporarily disabled: deadline feature
+  // const [editDeadline, setEditDeadline] = useState(task.deadline ? isoToDateTimeLocal(task.deadline) : '');
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -71,15 +72,15 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
       newErrors.category = 'Invalid category';
     }
     
-    // Deadline validation
-    if (editDeadline) {
-      const deadlineDate = new Date(editDeadline);
-      if (isNaN(deadlineDate.getTime())) {
-        newErrors.deadline = 'Invalid deadline format';
-      } else if (deadlineDate <= new Date() && task.status !== 'Done') {
-        newErrors.deadline = 'Deadline must be in the future';
-      }
-    }
+    // Temporarily disabled: deadline validation
+    // if (editDeadline) {
+    //   const deadlineDate = new Date(editDeadline);
+    //   if (isNaN(deadlineDate.getTime())) {
+    //     newErrors.deadline = 'Invalid deadline format';
+    //   } else if (deadlineDate <= new Date() && task.status !== 'Done') {
+    //     newErrors.deadline = 'Deadline must be in the future';
+    //   }
+    // }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -89,13 +90,14 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
     if (!validate()) return;
     
     try {
-      const deadlineISO = editDeadline ? new Date(editDeadline).toISOString() : undefined;
+      // Temporarily disabled: deadline feature
+      // const deadlineISO = editDeadline ? new Date(editDeadline).toISOString() : undefined;
       await onUpdate(task.id, {
         title: editTitle.trim(),
         description: editDescription.trim(),
         priority: editPriority,
         category: editCategory || undefined,
-        deadline: deadlineISO,
+        // deadline: deadlineISO, // Temporarily disabled
       });
       setIsEditing(false);
       setErrors({});
@@ -109,7 +111,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
     setEditDescription(task.description);
     setEditPriority(task.priority);
     setEditCategory(task.category);
-    setEditDeadline(task.deadline ? isoToDateTimeLocal(task.deadline) : '');
+    // setEditDeadline(task.deadline ? isoToDateTimeLocal(task.deadline) : ''); // Temporarily disabled
     setIsEditing(false);
   };
 
@@ -181,7 +183,8 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
-          <div>
+          {/* Temporarily disabled: deadline input */}
+          {/* <div>
             <input
               type="datetime-local"
               value={editDeadline}
@@ -198,7 +201,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
               <p className="text-red-600 text-xs mt-1">{errors.deadline}</p>
             )}
             <p className="text-xs text-gray-500 mt-1">Leave empty for no deadline</p>
-          </div>
+          </div> */}
           <div className="flex gap-3 pt-2">
             <button 
               onClick={handleSave} 
@@ -228,8 +231,8 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
 
           {/* Timestamps and Deadline Indicators */}
           <div className="mb-4 space-y-2">
-            {/* Deadline with indicators */}
-            {task.deadline && (() => {
+            {/* Temporarily disabled: deadline display */}
+            {/* {task.deadline && (() => {
               // #region agent log
               if (import.meta.env.DEV) {
                 fetch('http://127.0.0.1:7242/ingest/a78c118c-fa70-4c1c-9718-152bf27e85b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TaskCard.jsx:deadline-render',message:'Rendering deadline UI',data:{taskId:task.id,taskTitle:task.title,deadlineValue:task.deadline,formattedResult:formatDateTime(task.deadline)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
@@ -251,7 +254,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
                   )}
                 </div>
               );
-            })()}
+            })()} */}
             
             {/* Created date */}
             {task.createdAt && (

@@ -44,14 +44,16 @@ try {
 router.get('/', async (req, res) => {
   try {
     const tasks = await readTasks();
+    // Temporarily disabled: remove deadline from response
+    const tasksWithoutDeadline = tasks.map(({ deadline, ...task }) => task);
     // #region agent log
     const fs = await import('fs/promises');
     const logPath = join(__dirname, '../../.cursor/debug.log');
-    const sampleTask = tasks[0] || {};
-    const logEntry = JSON.stringify({location:'tasks.js:GET',message:'Returning tasks',data:{taskCount:tasks.length,tasksWithDeadline:tasks.filter(t=>t.deadline).length,sampleTaskKeys:Object.keys(sampleTask),sampleTaskHasDeadline:'deadline' in sampleTask,sampleTaskDeadlineValue:sampleTask.deadline},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
+    const sampleTask = tasksWithoutDeadline[0] || {};
+    const logEntry = JSON.stringify({location:'tasks.js:GET',message:'Returning tasks',data:{taskCount:tasksWithoutDeadline.length,sampleTaskKeys:Object.keys(sampleTask)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
     await fs.appendFile(logPath, logEntry).catch(()=>{});
     // #endregion
-    res.json(tasks);
+    res.json(tasksWithoutDeadline);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tasks' });
   }
@@ -60,7 +62,9 @@ router.get('/', async (req, res) => {
 // POST /api/tasks - Create new task
 router.post('/', async (req, res) => {
   try {
-    const { title, description, priority = 'Medium', status = 'Todo', category, deadline } = req.body;
+    // Temporarily disabled: ignore deadline from request
+    const { title, description, priority = 'Medium', status = 'Todo', category } = req.body;
+    // const { title, description, priority = 'Medium', status = 'Todo', category, deadline } = req.body;
     
     // Validation
     const trimmedTitle = title?.trim() || '';
@@ -86,19 +90,19 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Invalid category' });
     }
     
-    // Deadline validation
-    let deadlineISO = null;
-    if (deadline) {
-      const deadlineDate = new Date(deadline);
-      if (isNaN(deadlineDate.getTime())) {
-        return res.status(400).json({ error: 'Invalid deadline format' });
-      }
-      // Check if deadline is in the future
-      if (deadlineDate <= new Date()) {
-        return res.status(400).json({ error: 'Deadline must be in the future' });
-      }
-      deadlineISO = deadlineDate.toISOString();
-    }
+    // Temporarily disabled: deadline validation
+    // let deadlineISO = null;
+    // if (deadline) {
+    //   const deadlineDate = new Date(deadline);
+    //   if (isNaN(deadlineDate.getTime())) {
+    //     return res.status(400).json({ error: 'Invalid deadline format' });
+    //   }
+    //   // Check if deadline is in the future
+    //   if (deadlineDate <= new Date()) {
+    //     return res.status(400).json({ error: 'Deadline must be in the future' });
+    //   }
+    //   deadlineISO = deadlineDate.toISOString();
+    // }
 
     const tasks = await readTasks();
     // Use provided category, or auto-categorize if not provided
@@ -114,7 +118,7 @@ router.post('/', async (req, res) => {
       category: taskCategory,
       priority,
       status,
-      deadline: deadlineISO,
+      // deadline: deadlineISO, // Temporarily disabled
       finishedAt,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -123,7 +127,9 @@ router.post('/', async (req, res) => {
     tasks.push(newTask);
     await writeTasks(tasks);
     
-    res.status(201).json(newTask);
+    // Temporarily disabled: remove deadline from response
+    const { deadline: _, ...responseTask } = newTask;
+    res.status(201).json(responseTask);
   } catch (error) {
     console.error('Error creating task:', error);
     res.status(500).json({ error: 'Failed to create task' });
@@ -134,7 +140,9 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, category, priority, status, deadline } = req.body;
+    // Temporarily disabled: ignore deadline from request
+    const { title, description, category, priority, status } = req.body;
+    // const { title, description, category, priority, status, deadline } = req.body;
     
     const tasks = await readTasks();
     const taskIndex = tasks.findIndex(task => task.id === id);
@@ -182,22 +190,22 @@ router.put('/:id', async (req, res) => {
       existingTask.priority = priority;
     }
     
-    // Handle deadline
-    if (deadline !== undefined) {
-      if (deadline === null || deadline === '') {
-        existingTask.deadline = null;
-      } else {
-        const deadlineDate = new Date(deadline);
-        if (isNaN(deadlineDate.getTime())) {
-          return res.status(400).json({ error: 'Invalid deadline format' });
-        }
-        // Only validate future deadline if task is not done
-        if (existingTask.status !== 'Done' && deadlineDate <= new Date()) {
-          return res.status(400).json({ error: 'Deadline must be in the future' });
-        }
-        existingTask.deadline = deadlineDate.toISOString();
-      }
-    }
+    // Temporarily disabled: deadline handling
+    // if (deadline !== undefined) {
+    //   if (deadline === null || deadline === '') {
+    //     existingTask.deadline = null;
+    //   } else {
+    //     const deadlineDate = new Date(deadline);
+    //     if (isNaN(deadlineDate.getTime())) {
+    //       return res.status(400).json({ error: 'Invalid deadline format' });
+    //     }
+    //     // Only validate future deadline if task is not done
+    //     if (existingTask.status !== 'Done' && deadlineDate <= new Date()) {
+    //       return res.status(400).json({ error: 'Deadline must be in the future' });
+    //     }
+    //     existingTask.deadline = deadlineDate.toISOString();
+    //   }
+    // }
     
     // Handle status and finishedAt
     if (status !== undefined) {
@@ -220,7 +228,9 @@ router.put('/:id', async (req, res) => {
     existingTask.updatedAt = new Date().toISOString();
     
     await writeTasks(tasks);
-    res.json(existingTask);
+    // Temporarily disabled: remove deadline from response
+    const { deadline: _, ...responseTask } = existingTask;
+    res.json(responseTask);
   } catch (error) {
     console.error('Error updating task:', error);
     res.status(500).json({ error: 'Failed to update task' });

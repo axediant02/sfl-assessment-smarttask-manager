@@ -22,7 +22,8 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
   const [description, setDescription] = useState(initialTask?.description || '');
   const [priority, setPriority] = useState(initialTask?.priority || 'Medium');
   const [category, setCategory] = useState(initialTask?.category || '');
-  const [deadline, setDeadline] = useState(initialTask?.deadline ? isoToDateTimeLocal(initialTask.deadline) : '');
+  // Temporarily disabled: deadline feature
+  // const [deadline, setDeadline] = useState(initialTask?.deadline ? isoToDateTimeLocal(initialTask.deadline) : '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -52,15 +53,15 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
       newErrors.category = 'Invalid category selected';
     }
     
-    // Deadline validation
-    if (deadline) {
-      const deadlineDate = new Date(deadline);
-      if (isNaN(deadlineDate.getTime())) {
-        newErrors.deadline = 'Invalid deadline format';
-      } else if (deadlineDate <= new Date()) {
-        newErrors.deadline = 'Deadline must be in the future';
-      }
-    }
+    // Temporarily disabled: deadline validation
+    // if (deadline) {
+    //   const deadlineDate = new Date(deadline);
+    //   if (isNaN(deadlineDate.getTime())) {
+    //     newErrors.deadline = 'Invalid deadline format';
+    //   } else if (deadlineDate <= new Date()) {
+    //     newErrors.deadline = 'Deadline must be in the future';
+    //   }
+    // }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -73,21 +74,21 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
 
     setIsSubmitting(true);
     try {
-      // Convert datetime-local to ISO string
-      const deadlineISO = deadline ? new Date(deadline).toISOString() : undefined;
+      // Temporarily disabled: deadline feature
+      // const deadlineISO = deadline ? new Date(deadline).toISOString() : undefined;
       
       await onSubmit({
         title: title.trim(),
         description: description.trim(),
         priority,
         category: category || undefined, // Send undefined if empty to let backend auto-categorize
-        deadline: deadlineISO,
+        // deadline: deadlineISO, // Temporarily disabled
       });
       setTitle('');
       setDescription('');
       setPriority('Medium');
       setCategory('');
-      setDeadline('');
+      // setDeadline(''); // Temporarily disabled
       setErrors({});
       onClose();
     } catch (error) {
@@ -191,7 +192,8 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
               <p className="text-xs text-gray-500 mt-1">Leave as "Auto" to let the system categorize based on keywords</p>
             </div>
 
-            <div>
+            {/* Temporarily disabled: deadline input */}
+            {/* <div>
               <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
                 Deadline (Optional)
               </label>
@@ -211,7 +213,7 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
                 <p className="text-red-600 text-xs mt-1">{errors.deadline}</p>
               )}
               <p className="text-xs text-gray-500 mt-1">Set a deadline to track when this task should be completed</p>
-            </div>
+            </div> */}
 
             <div className="flex gap-3 pt-4">
               <button
