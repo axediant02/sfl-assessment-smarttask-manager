@@ -23,20 +23,55 @@ const statusColors = {
   Done: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/50',
 };
 
+const categories = ['Work', 'Personal', 'Shopping', 'Health', 'Learning', 'Travel', 'Finance', 'Other'];
+const validPriorities = ['High', 'Medium', 'Low'];
+
 export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description);
   const [editPriority, setEditPriority] = useState(task.priority);
+  const [editCategory, setEditCategory] = useState(task.category);
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors = {};
+    
+    const trimmedTitle = editTitle.trim();
+    if (!trimmedTitle) {
+      newErrors.title = 'Title is required';
+    } else if (trimmedTitle.length > 200) {
+      newErrors.title = 'Title must be 200 characters or less';
+    }
+    
+    if (editDescription && editDescription.length > 1000) {
+      newErrors.description = 'Description must be 1000 characters or less';
+    }
+    
+    if (!validPriorities.includes(editPriority)) {
+      newErrors.priority = 'Invalid priority';
+    }
+    
+    if (editCategory && !categories.includes(editCategory)) {
+      newErrors.category = 'Invalid category';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSave = async () => {
+    if (!validate()) return;
+    
     try {
       await onUpdate(task.id, {
-        title: editTitle,
-        description: editDescription,
+        title: editTitle.trim(),
+        description: editDescription.trim(),
         priority: editPriority,
+        category: editCategory || undefined,
       });
       setIsEditing(false);
+      setErrors({});
     } catch (error) {
       console.error('Failed to update task:', error);
     }
@@ -46,6 +81,7 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
     setEditTitle(task.title);
     setEditDescription(task.description);
     setEditPriority(task.priority);
+    setEditCategory(task.category);
     setIsEditing(false);
   };
 
@@ -62,20 +98,42 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
       <div className="relative z-10">
       {isEditing ? (
         <div className="space-y-4">
-          <input
-            type="text"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm"
-            placeholder="Task title"
-          />
-          <textarea
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all bg-white/80 backdrop-blur-sm"
-            rows="3"
-            placeholder="Description"
-          />
+          <div>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => {
+                setEditTitle(e.target.value);
+                if (errors.title) setErrors({ ...errors, title: '' });
+              }}
+              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm ${
+                errors.title ? 'border-red-300' : 'border-gray-200'
+              }`}
+              placeholder="Task title"
+              maxLength={200}
+            />
+            {errors.title && (
+              <p className="text-red-600 text-xs mt-1">{errors.title}</p>
+            )}
+          </div>
+          <div>
+            <textarea
+              value={editDescription}
+              onChange={(e) => {
+                setEditDescription(e.target.value);
+                if (errors.description) setErrors({ ...errors, description: '' });
+              }}
+              className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all bg-white/80 backdrop-blur-sm ${
+                errors.description ? 'border-red-300' : 'border-gray-200'
+              }`}
+              rows="3"
+              placeholder="Description"
+              maxLength={1000}
+            />
+            {errors.description && (
+              <p className="text-red-600 text-xs mt-1">{errors.description}</p>
+            )}
+          </div>
           <select
             value={editPriority}
             onChange={(e) => setEditPriority(e.target.value)}
@@ -85,8 +143,22 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
             <option value="Medium">Medium</option>
             <option value="Low">Low</option>
           </select>
+          <select
+            value={editCategory}
+            onChange={(e) => setEditCategory(e.target.value)}
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm"
+          >
+            <option value="">🤖 Auto</option>
+            {categories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
           <div className="flex gap-3 pt-2">
-            <button onClick={handleSave} className="btn-primary flex-1">
+            <button 
+              onClick={handleSave} 
+              className="btn-primary flex-1"
+              disabled={Object.keys(errors).length > 0}
+            >
               💾 Save
             </button>
             <button onClick={handleCancel} className="btn-secondary flex-1">

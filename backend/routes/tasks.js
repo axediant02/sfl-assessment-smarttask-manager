@@ -55,17 +55,37 @@ router.post('/', async (req, res) => {
   try {
     const { title, description, priority = 'Medium', status = 'Todo', category } = req.body;
     
-    if (!title || title.trim() === '') {
+    // Validation
+    const trimmedTitle = title?.trim() || '';
+    if (!trimmedTitle) {
       return res.status(400).json({ error: 'Title is required' });
+    }
+    if (trimmedTitle.length > 200) {
+      return res.status(400).json({ error: 'Title must be 200 characters or less' });
+    }
+    if (description && description.length > 1000) {
+      return res.status(400).json({ error: 'Description must be 1000 characters or less' });
+    }
+    const validPriorities = ['High', 'Medium', 'Low'];
+    if (!validPriorities.includes(priority)) {
+      return res.status(400).json({ error: 'Priority must be High, Medium, or Low' });
+    }
+    const validStatuses = ['Todo', 'In Progress', 'Done'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Status must be Todo, In Progress, or Done' });
+    }
+    const validCategories = ['Work', 'Personal', 'Shopping', 'Health', 'Learning', 'Travel', 'Finance', 'Other'];
+    if (category && !validCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category' });
     }
 
     const tasks = await readTasks();
     // Use provided category, or auto-categorize if not provided
-    const taskCategory = category || categorizeTask(title, description || '');
+    const taskCategory = category || categorizeTask(trimmedTitle, description?.trim() || '');
     
     const newTask = {
       id: uuidv4(),
-      title: title.trim(),
+      title: trimmedTitle,
       description: description?.trim() || '',
       category: taskCategory,
       priority,
@@ -99,18 +119,48 @@ router.put('/:id', async (req, res) => {
 
     const existingTask = tasks[taskIndex];
     
-    // Update task fields
-    if (title !== undefined) existingTask.title = title.trim();
-    if (description !== undefined) existingTask.description = description?.trim() || '';
+    // Validation and update task fields
+    if (title !== undefined) {
+      const trimmedTitle = title.trim();
+      if (!trimmedTitle) {
+        return res.status(400).json({ error: 'Title is required' });
+      }
+      if (trimmedTitle.length > 200) {
+        return res.status(400).json({ error: 'Title must be 200 characters or less' });
+      }
+      existingTask.title = trimmedTitle;
+    }
+    if (description !== undefined) {
+      if (description.length > 1000) {
+        return res.status(400).json({ error: 'Description must be 1000 characters or less' });
+      }
+      existingTask.description = description.trim() || '';
+    }
     if (category !== undefined) {
+      const validCategories = ['Work', 'Personal', 'Shopping', 'Health', 'Learning', 'Travel', 'Finance', 'Other'];
+      if (category && !validCategories.includes(category)) {
+        return res.status(400).json({ error: 'Invalid category' });
+      }
       // If category is explicitly provided, use it
       existingTask.category = category;
     } else if (title !== undefined || description !== undefined) {
       // Only auto-categorize if category wasn't provided and title/description changed
       existingTask.category = categorizeTask(existingTask.title, existingTask.description);
     }
-    if (priority !== undefined) existingTask.priority = priority;
-    if (status !== undefined) existingTask.status = status;
+    if (priority !== undefined) {
+      const validPriorities = ['High', 'Medium', 'Low'];
+      if (!validPriorities.includes(priority)) {
+        return res.status(400).json({ error: 'Priority must be High, Medium, or Low' });
+      }
+      existingTask.priority = priority;
+    }
+    if (status !== undefined) {
+      const validStatuses = ['Todo', 'In Progress', 'Done'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Status must be Todo, In Progress, or Done' });
+      }
+      existingTask.status = status;
+    }
     
     existingTask.updatedAt = new Date().toISOString();
     

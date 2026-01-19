@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 const categories = ['Work', 'Personal', 'Shopping', 'Health', 'Learning', 'Travel', 'Finance', 'Other'];
+const validPriorities = ['High', 'Medium', 'Low'];
 
 export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
   const [title, setTitle] = useState(initialTask?.title || '');
@@ -8,10 +9,42 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
   const [priority, setPriority] = useState(initialTask?.priority || 'Medium');
   const [category, setCategory] = useState(initialTask?.category || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors = {};
+    
+    // Title validation
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      newErrors.title = 'Title is required';
+    } else if (trimmedTitle.length > 200) {
+      newErrors.title = 'Title must be 200 characters or less';
+    }
+    
+    // Description validation
+    if (description && description.length > 1000) {
+      newErrors.description = 'Description must be 1000 characters or less';
+    }
+    
+    // Priority validation
+    if (!validPriorities.includes(priority)) {
+      newErrors.priority = 'Invalid priority selected';
+    }
+    
+    // Category validation (if provided)
+    if (category && !categories.includes(category)) {
+      newErrors.category = 'Invalid category selected';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    
+    if (!validate()) return;
 
     setIsSubmitting(true);
     try {
@@ -25,6 +58,7 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
       setDescription('');
       setPriority('Medium');
       setCategory('');
+      setErrors({});
       onClose();
     } catch (error) {
       console.error('Failed to submit task:', error);
@@ -55,12 +89,21 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm font-medium"
+                onChange={(e) => {
+                  setTitle(e.target.value);
+                  if (errors.title) setErrors({ ...errors, title: '' });
+                }}
+                className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm font-medium ${
+                  errors.title ? 'border-red-300' : 'border-gray-200'
+                }`}
                 placeholder="Enter task title..."
-                required
+                maxLength={200}
                 autoFocus
               />
+              {errors.title && (
+                <p className="text-red-600 text-xs mt-1">{errors.title}</p>
+              )}
+              <p className="text-gray-400 text-xs mt-1">{title.length}/200 characters</p>
             </div>
 
             <div>
@@ -69,11 +112,21 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
               </label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all bg-white/80 backdrop-blur-sm"
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  if (errors.description) setErrors({ ...errors, description: '' });
+                }}
+                className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none transition-all bg-white/80 backdrop-blur-sm ${
+                  errors.description ? 'border-red-300' : 'border-gray-200'
+                }`}
                 rows="4"
                 placeholder="Enter task description..."
+                maxLength={1000}
               />
+              {errors.description && (
+                <p className="text-red-600 text-xs mt-1">{errors.description}</p>
+              )}
+              <p className="text-gray-400 text-xs mt-1">{description.length}/1000 characters</p>
             </div>
 
             <div>
@@ -91,6 +144,23 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
               </select>
             </div>
 
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all bg-white/80 backdrop-blur-sm font-medium"
+              >
+                <option value="">🤖 Auto (Smart Detection)</option>
+                {categories.map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 mt-1">Leave as "Auto" to let the system categorize based on keywords</p>
+            </div>
+
             <div className="flex gap-3 pt-4">
               <button
                 type="button"
@@ -103,7 +173,7 @@ export default function TaskForm({ onClose, onSubmit, initialTask = null }) {
               <button
                 type="submit"
                 className="btn-primary flex-1"
-                disabled={isSubmitting || !title.trim()}
+                disabled={isSubmitting || !title.trim() || Object.keys(errors).length > 0}
               >
                 {isSubmitting ? '⏳ Creating...' : initialTask ? '💾 Update' : '✨ Create Task'}
               </button>

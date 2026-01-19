@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import TaskList from './components/TaskList';
 import TaskForm from './components/TaskForm';
 import FilterBar from './components/FilterBar';
+import ConfirmModal from './components/ConfirmModal';
+import Pagination from './components/Pagination';
 import { api } from './services/api';
 
 function App() {
@@ -10,6 +12,11 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, taskId: null });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
   const [filters, setFilters] = useState({
     status: 'All',
     priority: 'All',
@@ -21,16 +28,46 @@ function App() {
     loadTasks();
   }, []);
 
-  // Filter tasks when filters or tasks change
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Filter tasks when filters, tasks, or search change
   useEffect(() => {
     const filtered = tasks.filter(task => {
       const statusMatch = filters.status === 'All' || task.status === filters.status;
       const priorityMatch = filters.priority === 'All' || task.priority === filters.priority;
       const categoryMatch = filters.category === 'All' || task.category === filters.category;
-      return statusMatch && priorityMatch && categoryMatch;
+      
+      // Search match (case-insensitive)
+      const searchMatch = !debouncedSearch || 
+        task.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        task.description.toLowerCase().includes(debouncedSearch.toLowerCase());
+      
+      return statusMatch && priorityMatch && categoryMatch && searchMatch;
     });
     setFilteredTasks(filtered);
-  }, [tasks, filters]);
+    // Reset to first page when filters/search change
+    setCurrentPage(1);
+  }, [tasks, filters, debouncedSearch]);
+
+  // Ensure currentPage is within valid range when filteredTasks changes
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredTasks.length / itemsPerPage));
+    if (currentPage > totalPages && filteredTasks.length > 0) {
+      setCurrentPage(Math.max(1, totalPages));
+    }
+  }, [filteredTasks.length, itemsPerPage, currentPage]);
+
+  // Calculate pagination
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / itemsPerPage));
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTasks = filteredTasks.slice(startIndex, endIndex);
 
   const loadTasks = async () => {
     try {
@@ -66,12 +103,16 @@ function App() {
     }
   };
 
-  const handleDeleteTask = async (id) => {
-    if (!confirm('Are you sure you want to delete this task?')) return;
+  const handleDeleteTask = (id) => {
+    setDeleteConfirm({ isOpen: true, taskId: id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.taskId) return;
     
     try {
-      await api.deleteTask(id);
-      setTasks(tasks.filter(task => task.id !== id));
+      await api.deleteTask(deleteConfirm.taskId);
+      setTasks(tasks.filter(task => task.id !== deleteConfirm.taskId));
     } catch (err) {
       setError('Failed to delete task');
       console.error('Error deleting task:', err);
@@ -173,7 +214,12 @@ function App() {
         </div>
 
         {/* Filters */}
-        <FilterBar filters={filters} onFilterChange={setFilters} />
+        <FilterBar 
+          filters={filters} 
+          onFilterChange={setFilters}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
         {/* Task List */}
         {loading ? (
@@ -187,11 +233,24 @@ function App() {
         ) : (
           <div className="fade-in">
             <TaskList
-              tasks={filteredTasks}
+              tasks={paginatedTasks}
               onUpdate={handleUpdateTask}
               onDelete={handleDeleteTask}
               onStatusChange={handleStatusChange}
             />
+            
+            {filteredTasks.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={(newItemsPerPage) => {
+                  setItemsPerPage(newItemsPerPage);
+                  setCurrentPage(1);
+                }}
+              />
+            )}
           </div>
         )}
 
@@ -202,6 +261,18 @@ function App() {
             onSubmit={handleCreateTask}
           />
         )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmModal
+          isOpen={deleteConfirm.isOpen}
+          onClose={() => setDeleteConfirm({ isOpen: false, taskId: null })}
+          onConfirm={confirmDelete}
+          title="Delete Task"
+          message="Are you sure you want to delete this task? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          confirmColor="danger"
+        />
       </div>
     </div>
   );
