@@ -44,6 +44,13 @@ try {
 router.get('/', async (req, res) => {
   try {
     const tasks = await readTasks();
+    // #region agent log
+    const fs = await import('fs/promises');
+    const logPath = join(__dirname, '../../.cursor/debug.log');
+    const sampleTask = tasks[0] || {};
+    const logEntry = JSON.stringify({location:'tasks.js:GET',message:'Returning tasks',data:{taskCount:tasks.length,tasksWithDeadline:tasks.filter(t=>t.deadline).length,sampleTaskKeys:Object.keys(sampleTask),sampleTaskHasDeadline:'deadline' in sampleTask,sampleTaskDeadlineValue:sampleTask.deadline},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})+'\n';
+    await fs.appendFile(logPath, logEntry).catch(()=>{});
+    // #endregion
     res.json(tasks);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch tasks' });

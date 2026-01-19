@@ -229,22 +229,27 @@ export default function TaskCard({ task, onUpdate, onDelete, onStatusChange }) {
           {/* Timestamps and Deadline Indicators */}
           <div className="mb-4 space-y-2">
             {/* Deadline with indicators */}
-            {task.deadline && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-gray-600">⏰ Deadline:</span>
-                <span className="text-xs font-medium text-gray-700">{formatDateTime(task.deadline)}</span>
-                {isOverdue(task.deadline, task.status) && (
-                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md">
-                    ⚠️ Overdue
-                  </span>
-                )}
-                {!isOverdue(task.deadline, task.status) && isApproaching(task.deadline, task.status) && (
-                  <span className="px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-md">
-                    ⏰ Due soon
-                  </span>
-                )}
-              </div>
-            )}
+            {task.deadline && (() => {
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/a78c118c-fa70-4c1c-9718-152bf27e85b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TaskCard.jsx:deadline-render',message:'Rendering deadline UI',data:{taskId:task.id,taskTitle:task.title,deadlineValue:task.deadline,formattedResult:formatDateTime(task.deadline)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+              // #endregion
+              return (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs text-gray-600">⏰ Deadline:</span>
+                  <span className="text-xs font-medium text-gray-700">{formatDateTime(task.deadline)}</span>
+                  {isOverdue(task.deadline, task.status) && (
+                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-red-500 to-red-600 text-white shadow-md">
+                      ⚠️ Overdue
+                    </span>
+                  )}
+                  {!isOverdue(task.deadline, task.status) && isApproaching(task.deadline, task.status) && (
+                    <span className="px-2 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-md">
+                      ⏰ Due soon
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
             
             {/* Created date */}
             {task.createdAt && (

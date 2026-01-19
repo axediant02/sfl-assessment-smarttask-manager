@@ -31,10 +31,18 @@ export function formatDate(dateString, includeTime = true) {
  * @returns {string} Formatted date string
  */
 export function formatDateTime(dateString) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/a78c118c-fa70-4c1c-9718-152bf27e85b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dateFormatter.js:formatDateTime-entry',message:'formatDateTime called',data:{input:dateString,inputType:typeof dateString,isEmpty:!dateString},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
   if (!dateString) return '';
   
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
+  if (isNaN(date.getTime())) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/a78c118c-fa70-4c1c-9718-152bf27e85b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dateFormatter.js:formatDateTime-invalid',message:'Invalid date detected',data:{input:dateString,dateValue:date.toString()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    return '';
+  }
   
   const datePart = date.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -48,7 +56,11 @@ export function formatDateTime(dateString) {
     hour12: true,
   });
   
-  return `${datePart} at ${timePart}`;
+  const result = `${datePart} at ${timePart}`;
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/a78c118c-fa70-4c1c-9718-152bf27e85b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dateFormatter.js:formatDateTime-exit',message:'formatDateTime result',data:{input:dateString,result:result},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+  return result;
 }
 
 /**

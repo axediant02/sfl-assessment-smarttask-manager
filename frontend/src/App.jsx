@@ -74,6 +74,9 @@ function App() {
       setLoading(true);
       setError(null);
       const data = await api.getTasks();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/a78c118c-fa70-4c1c-9718-152bf27e85b7',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.jsx:loadTasks',message:'Tasks loaded into state',data:{taskCount:data.length,tasksWithDeadline:data.filter(t=>t.deadline).length,sampleTaskDeadline:data.find(t=>t.deadline)?.deadline,allTaskKeys:data[0]?Object.keys(data[0]):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       setTasks(data);
     } catch (err) {
       setError('Failed to load tasks. Please check if the backend is running.');
